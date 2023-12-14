@@ -1,8 +1,10 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { Recipe } from '../recipe.model';
-import { RecipeService } from '../recipes.service';
+import * as fromApp from 'src/app/store/app.reducer'
+
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, map } from 'rxjs';
+import { Store } from '@ngrx/store';
 
 @Component({
   selector: 'app-recipe-list',
@@ -13,15 +15,24 @@ export class RecipeListComponent implements OnInit, OnDestroy{
   @Output() selectedRecipeItem = new EventEmitter<Recipe>();
   subscription:Subscription;
   recipes:Recipe[];
-  constructor(private recipeService:RecipeService, private router:Router, private route:ActivatedRoute){
+  constructor(private router:Router, 
+    private route:ActivatedRoute,
+    private store:Store<fromApp.AppState>){
   }
   ngOnInit(): void {
-    this.subscription = this.recipeService.recipeChanged.subscribe(
+    this.subscription = this.store.select('recipes').
+    pipe(
+      map(
+        (recipeState) =>{
+          return recipeState.recipes
+        }
+      )
+    ).
+    subscribe(
       (recipes)=>{
         this.recipes = recipes;
       }
     );
-    this.recipes = this.recipeService.getRecipes();
   }
   selectedItem(item:Recipe){
     this.selectedRecipeItem.emit(item);
